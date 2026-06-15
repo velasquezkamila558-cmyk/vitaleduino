@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VitalEduino - Innovacion biomedica para tomar signos vitales basado en Arduino para formación médica de bajo costo">
+    <meta name="author" content="Velásquez, K. & Pérez, C.">
+    <meta name="keywords" content="Arduino, signos vitales, simulador médico, educación, temperatura, frecuencia cardíaca">
+    <title>VitalEduino | Simulador de Signos Vitales</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' text-anchor='middle' dy='.35em' font-size='60' fill='%234CD6B3'>❤️</text></svg>">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Montserrat + Inter (según identidad VitalEduino) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* ============================================
+           VARIABLES DE DISEÑO - IDENTIDAD VITALEDUINO
+           ============================================ */
+        :root {
+            /* ============================================
+   TEMAS DE COLOR PERSONALIZABLES
+   ============================================ */
+/* Tema Médico (azul/verde) - DEFAULT */
+:root {
+    --vital-blue: #64B6F7;
+    --vital-aqua: #4CD6B3;
+    --vital-gray: #AEBCC4;
+    --vital-white: #F4F4F4;
+    --vital-dark: #2C3E50;
+    --bg-primary: #F8FAFE;
+    --bg-secondary: #FFFFFF;
+    --text-primary: #1A2A3A;
+    --text-secondary: #5A6E7A;
+    --text-muted: #8A9BA8;
+    --border-light: #E8EDF2;
+}
+
+/* Tema Noche (oscuro profesional) */
+.theme-night {
+    --vital-blue: #3B82F6;
+    --vital-aqua: #06B6D4;
+    --vital-gray: #64748B;
+    --vital-white: #F1F5F9;
+    --vital-dark: #0F172A;
+    --bg-primary: #0F172A;
+    --bg-secondary: #1E293B;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    --border-light: #334155;
+}
+
+/* Tema Naturaleza (verdes suaves) */
+.theme-nature {
+    --vital-blue: #34D399;
+    --vital-aqua: #6EE7B7;
+    --vital-gray: #9CA3AF;
+    --vital-white: #F3F4F6;
+    --vital-dark: #064E3B;
+    --bg-primary: #ECFDF5;
+    --bg-secondary: #F0FDF4;
+    --text-primary: #064E3B;
+    --text-secondary: #047857;
+    --text-muted: #6B7280;
+    --border-light: #D1FAE5;
+}
+
+/* Tema Emergencia (rojo/gris) */
+.theme-emergency {
+    --vital-blue: #EF4444;
+    --vital-aqua: #F87171;
+    --vital-gray: #9CA3AF;
+    --vital-white: #FEF2F2;
+    --vital-dark: #7F1D1D;
+    --bg-primary: #FEF2F2;
+    --bg-secondary: #FEE2E2;
+    --text-primary: #7F1D1D;
+    --text-secondary: #991B1B;
+    --text-muted: #9CA3AF;
+    --border-light: #FECACA;
+}
+            /* Paleta de colores oficial */
+            --vital-blue: #64B6F7;
+            --vital-aqua: #4CD6B3;
+            --vital-gray: #AEBCC4;
+            --vital-white: #F4F4F4;
+            --vital-dark: #2C3E50;
+            
+            /* Variables funcionales */
+            --bg-primary: #F8FAFE;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #1A2A3A;
+            --text-secondary: #5A6E7A;
+            --text-muted: #8A9BA8;
+            --border-light: #E8EDF2;
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s ease;
+        }
+
+        /* Dark mode adaptado a la paleta VitalEduino */
+        .dark-mode {
+            --bg-primary: #1A2A3A;
+            --bg-secondary: #243447;
+            --text-primary: #F4F4F4;
+            --text-secondary: #AEBCC4;
+            --text-muted: #8A9BA8;
+            --border-light: #354B5E;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-primary) 100%);
+            color: var(--text-primary);
+            transition: var(--transition);
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--border-light);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--vital-blue);
+            border-radius: 10px;
+        }
+
+        /* ============================================
+           LAYOUT PRINCIPAL
+           ============================================ */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar profesional */
+        .sidebar {
+            width: 100px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 0;
+            gap: 32px;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-side {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--vital-blue), var(--vital-aqua));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: white;
+        }
+
+        .nav-item {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background: rgba(100, 182, 247, 0.1);
+            color: var(--vital-blue);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--vital-blue), var(--vital-aqua));
+            color: white;
+            box-shadow: 0 6px 14px rgba(76, 214, 179, 0.3);
+        }
+
+        .nav-footer {
+            margin-top: auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 100px;
+            padding: 32px 40px;
+        }
+
+        /* Header académico */
+        .academic-header {
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: rgba(100, 182, 247, 0.12);
+            color: var(--vital-blue);
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .title-main {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--vital-blue), var(--vital-aqua));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Grid Dashboard */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 28px;
+        }
+
+        /* Cards profesionales */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 28px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .card-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        /* Signos vitales - Display principal */
+        .vital-card {
+            background: linear-gradient(135deg, var(--vital-blue), var(--vital-aqua));
+            border-radius: 28px;
+            padding: 28px;
+            color: white;
+            margin-bottom: 24px;
+        }
+
+        .vital-label {
+            font-size: 0.85rem;
+            opacity: 0.85;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .vital-value {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin: 12px 0 4px;
+        }
+
+        .vital-unit {
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        /* Grid de sensores */
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .sensor-item {
+            background: var(--bg-primary);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+            transition: var(--transition);
+        }
+
+        .sensor-item:hover {
+            border-color: var(--vital-aqua);
+            transform: translateY(-3px);
+        }
+
+        .sensor-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .sensor-value {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Botones */
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--vital-blue), var(--vital-aqua));
+            border: none;
+            border-radius: 24px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: scale(0.98);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Status Panel */
+        .status-panel {
+            background: var(--bg-primary);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            margin-top: 12px;
+        }
+
+        .led {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+            animation: pulse 1.5s infinite;
+        }
+
+        .led.connected {
+            background: #4CD6B3;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Chart container */
+        .chart-container {
+            margin-top: 20px;
+            background: var(--bg-primary);
+            border-radius: 20px;
+            padding: 16px;
+        }
+
+        canvas {
+            max-height: 180px;
+            width: 100%;
+        }
+
+        /* MODAL - Versión profesional */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-container {
+            max-width: 1100px;
+            width: 90%;
+            background: var(--bg-secondary);
+            border-radius: 40px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+            box-shadow: var(--shadow-lg);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-visual {
+            flex: 1.2;
+            background: linear-gradient(135deg, #1a2a3a, #0f1a24);
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            min-height: 500px;
+        }
+
+        .modal-info {
+            flex: 1;
+            padding: 48px;
+            background: var(--bg-secondary);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: white;
+            background: rgba(255,255,255,0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .brazo-wrapper {
+            position: relative;
+            text-align: center;
+        }
+
+        .brazo-img {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 20px;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+        }
+
+        .hotspot {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background: var(--vital-aqua);
+            border: 3px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 0 15px var(--vital-aqua);
+        }
+
+        .hotspot:hover {
+            transform: scale(1.2);
+            background: var(--vital-blue);
+            box-shadow: 0 0 20px var(--vital-blue);
+        }
+
+        .component-card {
+            background: var(--bg-primary);
+            border-radius: 24px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 24px;
+            border: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .component-card.active-comp {
+            border-color: var(--vital-aqua);
+            background: rgba(76, 214, 179, 0.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 70px;
+            }
+            .main-content {
+                margin-left: 70px;
+                padding: 20px;
+            }
+            .modal-container {
+                flex-direction: column;
+            }
+            .title-main {
+                font-size: 1.8rem;
+            }
+        }
+        /* ============================================
+   COMPARADOR DE RANGOS - MODAL
+   ============================================ */
+.rangos-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 1001;
+    justify-content: center;
+    align-items: center;
+}
+
+.rangos-container {
+    background: var(--bg-secondary);
+    border-radius: 32px;
+    max-width: 500px;
+    width: 90%;
+    padding: 28px;
+    box-shadow: var(--shadow-lg);
+    animation: modalFadeIn 0.3s ease;
+}
+
+.rangos-container h3 {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--vital-aqua);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.rangos-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rangos-tabla th,
+.rangos-tabla td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.rangos-tabla th {
+    color: var(--vital-blue);
+    font-weight: 600;
+}
+
+.rangos-tabla td {
+    color: var(--text-secondary);
+}
+
+.rangos-cerrar {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    background: var(--vital-gray);
+    border: none;
+    border-radius: 24px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.rangos-cerrar:hover {
+    background: var(--vital-blue);
+}
+
+/* Sidebar mejorado */
+.sidebar {
+    width: 100px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 0;
+    gap: 32px;
+    position: fixed;
+    height: 100vh;
+    z-index: 100;
+}
+
+.logo-side {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--vital-blue), var(--vital-aqua));
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.logo-side:hover {
+    transform: scale(1.05);
+}
+
+.nav-item {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.nav-item:hover {
+    background: rgba(100, 182, 247, 0.1);
+    color: var(--vital-blue);
+    transform: translateX(4px);
+}
+
+.nav-item.active {
+    background: linear-gradient(135deg, var(--vital-blue), var(--vital-aqua));
+    color: white;
+    box-shadow: 0 6px 14px rgba(76, 214, 179, 0.3);
+}
+
+.nav-item .tooltip {
+    position: absolute;
+    left: 70px;
+    background: var(--vital-dark);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    font-weight: 500;
+}
+
+.nav-item:hover .tooltip {
+    opacity: 1;
+}
+
+.nav-footer {
+    margin-top: auto;
+}
+/* ============================================
+   MODO EXAMEN
+   ============================================ */
+.modo-examen .vital-value span,
+.modo-examen .sensor-value span {
+    filter: blur(8px);
+    cursor: pointer;
+    transition: filter 0.3s ease;
+}
+
+.modo-examen .vital-value span:hover,
+.modo-examen .sensor-value span:hover {
+    filter: blur(3px);
+}
+
+/* Botón de modo examen */
+.btn-examen {
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    border: none;
+    border-radius: 24px;
+    padding: 14px 20px;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.btn-examen.active {
+    background: linear-gradient(135deg, #4CD6B3, #64B6F7);
+}
+
+.btn-examen:hover {
+    transform: scale(0.98);
+}
+
+/* Panel de respuestas del examen */
+.examen-panel {
+    background: var(--bg-primary);
+    border-radius: 20px;
+    padding: 16px;
+    margin-top: 15px;
+    border-left: 4px solid #FF6B6B;
+    display: none;
+}
+
+.examen-panel.visible {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.examen-panel h4 {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.examen-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.examen-input:focus {
+    outline: none;
+    border-color: var(--vital-aqua);
+}
+
+.btn-verificar {
+    background: var(--vital-aqua);
+    border: none;
+    border-radius: 16px;
+    padding: 10px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+}
+
+.resultado-examen {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.resultado-correcto {
+    background: rgba(76, 214, 179, 0.2);
+    color: #4CD6B3;
+}
+
+.resultado-incorrecto {
+    background: rgba(255, 107, 107, 0.2);
+    color: #FF6B6B;
+}
+/* ============================================
+   BOTÓN DE EMERGENCIA
+   ============================================ */
+.btn-emergencia {
+    background: linear-gradient(135deg, #FF3B3B, #FF0000);
+    border: none;
+    border-radius: 24px;
+    padding: 14px 20px;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 15px;
+    animation: pulse-emergencia 2s infinite;
+}
+
+.btn-emergencia:hover {
+    transform: scale(0.98);
+    animation: none;
+}
+
+@keyframes pulse-emergencia {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+    }
+}
+
+.btn-reestablecer {
+    background: linear-gradient(135deg, var(--vital-gray), var(--vital-dark));
+    border: none;
+    border-radius: 24px;
+    padding: 14px 20px;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.btn-reestablecer:hover {
+    transform: scale(0.98);
+}
+
+/* ============================================
+   SELECTOR DE TEMAS
+   ============================================ */
+.temas-container {
+    background: var(--bg-secondary);
+    border-radius: 28px;
+    padding: 16px;
+    margin-top: 20px;
+    border: 1px solid var(--border-light);
+}
+
+.temas-titulo {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.temas-botones {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.tema-btn {
+    padding: 10px 5px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.tema-btn i {
+    font-size: 1rem;
+}
+
+.tema-btn:hover {
+    transform: translateY(-2px);
+}
+
+.tema-medico {
+    background: linear-gradient(135deg, #64B6F7, #4CD6B3);
+    color: white;
+}
+
+.tema-noche {
+    background: linear-gradient(135deg, #1E293B, #0F172A);
+    color: white;
+}
+
+.tema-nature {
+    background: linear-gradient(135deg, #34D399, #064E3B);
+    color: white;
+}
+
+.tema-emergencia {
+    background: linear-gradient(135deg, #EF4444, #7F1D1D);
+    color: white;
+}
+
+.tema-btn.active-theme {
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--vital-blue);
+    transform: scale(0.98);
+}/* ============================================
+   MODO CONSULTORIO - JUEGO DE DIAGNÓSTICO
+   ============================================ */
+.game-container {
+    background: var(--bg-secondary);
+    border-radius: 28px;
+    padding: 20px;
+    margin-top: 20px;
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.game-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--vital-aqua);
+}
+
+.game-score {
+    background: var(--bg-primary);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--vital-blue);
+}
+
+.game-score i {
+    margin-right: 5px;
+}
+
+.paciente-card {
+    background: var(--bg-primary);
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.paciente-avatar {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+}
+
+.paciente-nombre {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.paciente-edad {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.game-valores {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.game-valor-item {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+}
+
+.game-valor-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.game-valor-number {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--vital-blue);
+}
+
+.game-opciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.opcion-btn {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-light);
+    border-radius: 16px;
+    padding: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.opcion-btn:hover {
+    border-color: var(--vital-aqua);
+    transform: scale(0.98);
+}
+
+.opcion-btn.correcta {
+    background: #4CD6B3;
+    border-color: #4CD6B3;
+    color: white;
+}
+
+.opcion-btn.incorrecta {
+    background: #FF6B6B;
+    border-color: #FF6B6B;
+    color: white;
+}
+
+.game-feedback {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 0.8rem;
+    text-align: center;
+    display: none;
+}
+
+.game-feedback.visible {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+.feedback-correcto {
+    background: rgba(76, 214, 179, 0.2);
+    color: #4CD6B3;
+}
+
+.feedback-incorrecto {
+    background: rgba(255, 107, 107, 0.2);
+    color: #FF6B6B;
+}
+
+.game-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-siguiente {
+    flex: 1;
+    background: linear-gradient(135deg, var(--vital-blue), var(--vital-aqua));
+    border: none;
+    border-radius: 16px;
+    padding: 12px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-reiniciar {
+    flex: 0.5;
+    background: var(--vital-gray);
+    border: none;
+    border-radius: 16px;
+    padding: 12px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-siguiente:hover, .btn-reiniciar:hover {
+    transform: scale(0.98);
+}
+
+.progreso-bar {
+    height: 4px;
+    background: var(--border-light);
+    border-radius: 2px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.progreso-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--vital-blue), var(--vital-aqua));
+    width: 0%;
+    transition: width 0.3s ease;
+}
+/* ============================================
+   MODAL HISTORIAL
+   ============================================ */
+.historial-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 1001;
+    justify-content: center;
+    align-items: center;
+}
+
+.historial-container {
+    background: var(--bg-secondary);
+    border-radius: 32px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    padding: 28px;
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+}
+
+.historial-container h3 {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--vital-aqua);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.historial-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.historial-item {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--vital-aqua);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.historial-fecha {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.historial-valores {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.historial-valores span {
+    background: var(--bg-secondary);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.historial-cerrar {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    background: var(--vital-gray);
+    border: none;
+    border-radius: 24px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ============================================
+   MODAL ESTADÍSTICAS
+   ============================================ */
+.estadisticas-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 1001;
+    justify-content: center;
+    align-items: center;
+}
+
+.estadisticas-container {
+    background: var(--bg-secondary);
+    border-radius: 32px;
+    max-width: 400px;
+    width: 90%;
+    padding: 28px;
+    box-shadow: var(--shadow-lg);
+}
+
+.estadisticas-container h3 {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--vital-aqua);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.estadistica-card {
+    background: var(--bg-primary);
+    border-radius: 20px;
+    padding: 16px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.estadistica-titulo {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.estadistica-valor {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--vital-blue);
+}
+
+.estadistica-unidad {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.estadistica-rango {
+    font-size: 0.7rem;
+    color: var(--vital-aqua);
+    margin-top: 5px;
+}
+
+.estadisticas-cerrar {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    background: var(--vital-gray);
+    border: none;
+    border-radius: 24px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <!-- Sidebar -->
+   <aside class="sidebar">
+    <div class="nav-item active" data-tab="dashboard" id="dashboardBtn">
+        <i class="fas fa-chart-line"></i>
+        <span class="tooltip">Dashboard</span>
+    </div>
+    
+    <div class="nav-item" id="openHardwareModal">
+        <i class="fas fa-microchip"></i>
+        <span class="tooltip">Hardware</span>
+    </div>
+    
+    <div class="nav-item" id="openRangosModal">
+        <i class="fas fa-table-list"></i>
+        <span class="tooltip">Rangos normales</span>
+    </div>
+    
+    <!-- HISTORIAL -->
+    <div class="nav-item" id="openHistorialModal">
+        <i class="fas fa-history"></i>
+        <span class="tooltip">Historial</span>
+    </div>
+    
+    <!-- ESTADÍSTICAS -->
+    <div class="nav-item" id="openEstadisticasModal">
+        <i class="fas fa-chart-simple"></i>
+        <span class="tooltip">Estadísticas</span>
+    </div>
+</aside>
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="academic-header">
+            <span class="badge">
+                <i class="fas fa-graduation-cap"></i> Trabajo de Grado | 2025-2026
+            </span>
+            <h1 class="title-main">VitalEduino</h1>
+            <p class="subtitle">
+                Simulador de toma de signos vitales basado en Arduino para estudiantes de medicina de bajos recursos<br>
+                <strong>Autoras:</strong> Kamila Velásquez & Camila Pérez | <strong>Tutor:</strong> UE Colegio Loefling
+            </p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Columna izquierda: Simulación -->
+            <div>
+                <!-- Tarjeta principal de signo vital -->
+               <!-- Tarjeta principal de signo vital -->
+<!-- Tarjeta principal de signo vital -->
+<div class="vital-card">
+    <div class="vital-label">
+        <i class="fas fa-heartbeat"></i> FRECUENCIA CARDÍACA
+    </div>
+    <div class="vital-value">
+        <span id="heartRateValue">78</span>
+        <span class="vital-unit">BPM</span>
+    </div>
+    <div style="font-size: 0.8rem; opacity: 0.8;">Rango fisiológico normal: 60-100 BPM</div>
+</div>
+                <!-- Gráfica -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-chart-line"></i> Histórico de Frecuencia Cardíaca</span>
+                        <i class="fas fa-sync-alt" style="cursor: pointer; color: var(--vital-blue);" id="refreshChart"></i>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="heartChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Sensores adicionales -->
+                <div class="sensors-grid">
+                    <div class="sensor-item">
+                        <div class="sensor-icon">
+                            <i class="fas fa-thermometer-half" style="color: #FF6B6B;"></i>
+                        </div>
+                        <div class="sensor-value">
+                            <span id="tempValue">36.5</span>°C
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Temperatura corporal</div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">
+                            <i class="fas fa-lungs" style="color: var(--vital-blue);"></i>
+                        </div>
+                        <div class="sensor-value">
+                            <span id="spo2Value">97</span>%
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">SpO₂ (Oximetría)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Control y estado -->
+            <div>
+                <!-- BOTÓN DE CONEXIÓN BLUETOOTH -->
+<button class="btn-primary" id="connectBtn" style="margin-bottom: 10px;">
+    <i class="fas fa-bluetooth-b"></i> Conectar dispositivo
+</button>
+
+                       <!-- ========== BOTONES NUEVOS PARA MEDIR ========== -->
+<div style="display: flex; gap: 10px; margin-top: 15px;">
+    <button class="btn-primary" id="btnTomarFC" style="flex: 1; background: linear-gradient(135deg, #FF6B6B, #FF4757);">
+        <i class="fas fa-heartbeat"></i> Tomar FC
+    </button>
+    <button class="btn-primary" id="btnTomarTemp" style="flex: 1; background: linear-gradient(135deg, #FFB347, #FF8C00);">
+        <i class="fas fa-thermometer-half"></i> Tomar Temp
+    </button>
+</div>
+<!-- ============================================= -->
+                
+                <div class="status-panel">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                        <i class="fas fa-microchip" style="color: var(--vital-aqua);"></i>
+                        <strong>Estado del sistema</strong>
+                    </div>
+                    <div class="status-indicator">
+                        <div class="led" id="statusLed"></div>
+                        <div>
+                            <div id="statusText" style="font-weight: 500;">Desconectado</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);" id="statusDetail">Esperando conexión con Arduino Nano</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-light); font-size: 0.75rem; color: var(--text-muted);">
+                        <i class="fas fa-info-circle"></i> Simulación de signos vitales con variabilidad fisiológica
+                    </div>
+                    <!-- Botón Modo Examen -->
+<button class="btn-examen" id="btnExamen">
+    <i class="fas fa-graduation-cap"></i> 📝 Activar Modo Examen
+</button>
+
+<!-- Panel de respuestas -->
+<div class="examen-panel" id="examenPanel">
+    <h4><i class="fas fa-question-circle"></i> ¿Cuál es el diagnóstico?</h4>
+    <input type="text" class="examen-input" id="respuestaExamen" placeholder="Escribe tu diagnóstico aquí...">
+    <button class="btn-verificar" id="btnVerificar">Verificar respuesta</button>
+    <div id="resultadoExamen"></div>
+    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 12px;">
+        <i class="fas fa-lightbulb"></i> Ejemplos: "Bradicardia", "Taquicardia", "Normal", "Hipotermia", "Fiebre"
+    </p>
+</div>
+<!-- BOTONES DE EMERGENCIA -->
+<button class="btn-emergencia" id="btnEmergencia">
+    <i class="fas fa-ambulance"></i> 🚨 SIMULAR EMERGENCIA
+</button>
+
+<button class="btn-reestablecer" id="btnReestablecer">
+    <i class="fas fa-heartbeat"></i> 🔄 Reestablecer valores normales
+</button>
+                </div>
+
+                <!-- Información académica -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-flask"></i> Fundamento técnico</span>
+                    </div>
+                    <div style="font-size: 0.85rem; line-height: 1.6; color: var(--text-secondary);">
+                        <p>Este simulador emplea un <strong>Arduino Nano</strong> como unidad de procesamiento central, integrando sensores de temperatura DS18B20 y oximetría MAX30102 para la generación de señales fisiológicas realistas.</p>
+                        <br>
+                        <p><strong>Signos monitoreados:</strong> Frecuencia cardíaca (BPM), temperatura corporal (°C) y saturación de oxígeno (SpO₂).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<!-- MODO CONSULTORIO - JUEGO -->
+<div class="game-container" id="gameContainer">
+    <div class="game-header">
+        <div class="game-title">
+            <i class="fas fa-gamepad"></i> Modo Consultorio
+        </div>
+        <div class="game-score">
+            <i class="fas fa-star"></i> <span id="puntaje">0</span>
+        </div>
+    </div>
+    
+    <div class="paciente-card">
+        <div class="paciente-avatar" id="pacienteAvatar">👨</div>
+        <div class="paciente-nombre" id="pacienteNombre">Paciente 1</div>
+        <div class="paciente-edad" id="pacienteEdad">35 años</div>
+    </div>
+    
+    <div class="game-valores">
+        <div class="game-valor-item">
+            <div class="game-valor-label"><i class="fas fa-heartbeat"></i> FC</div>
+            <div class="game-valor-number" id="gameFC">--</div>
+        </div>
+        <div class="game-valor-item">
+            <div class="game-valor-label"><i class="fas fa-thermometer-half"></i> Temp</div>
+            <div class="game-valor-number" id="gameTemp">--</div>
+        </div>
+        <div class="game-valor-item">
+            <div class="game-valor-label"><i class="fas fa-lungs"></i> SpO₂</div>
+            <div class="game-valor-number" id="gameSpO2">--</div>
+        </div>
+    </div>
+    
+    <div class="game-opciones" id="gameOpciones">
+        <button class="opcion-btn" data-diagnostico="normal">🟢 Normal</button>
+        <button class="opcion-btn" data-diagnostico="taquicardia">❤️ Taquicardia</button>
+        <button class="opcion-btn" data-diagnostico="bradicardia">💙 Bradicardia</button>
+        <button class="opcion-btn" data-diagnostico="fiebre">🌡️ Fiebre</button>
+        <button class="opcion-btn" data-diagnostico="hipotermia">❄️ Hipotermia</button>
+        <button class="opcion-btn" data-diagnostico="hipoxia">🫁 Hipoxia</button>
+    </div>
+    
+    <div class="game-feedback" id="gameFeedback"></div>
+    
+    <div class="game-buttons">
+        <button class="btn-siguiente" id="btnSiguiente">▶ Siguiente paciente</button>
+        <button class="btn-reiniciar" id="btnReiniciarJuego">🔄 Reiniciar</button>
+    </div>
+    
+    <div class="progreso-bar">
+        <div class="progreso-fill" id="progresoFill"></div>
+    </div>
+</div>
+<!-- SELECTOR DE TEMAS -->
+<div class="temas-container">
+    <div class="temas-titulo">
+        <i class="fas fa-palette"></i>
+        <span>🎨 Personalizar tema</span>
+    </div>
+    <div class="temas-botones">
+        <button class="tema-btn tema-medico active-theme" data-tema="medico">
+            <i class="fas fa-stethoscope"></i>
+            <span>Médico</span>
+        </button>
+        <button class="tema-btn tema-noche" data-tema="noche">
+            <i class="fas fa-moon"></i>
+            <span>Noche</span>
+        </button>
+        <button class="tema-btn tema-nature" data-tema="nature">
+            <i class="fas fa-leaf"></i>
+            <span>Naturaleza</span>
+        </button>
+        <button class="tema-btn tema-emergencia" data-tema="emergency">
+            <i class="fas fa-ambulance"></i>
+            <span>Emergencia</span>
+        </button>
+    </div>
+</div>
+<!-- MODAL HARDWARE (Interactivo con hotspots) -->
+<div id="hardwareModal" class="modal">
+    <div class="modal-container">
+        <div class="modal-visual">
+            <div class="close-modal" id="closeModalBtn">&times;</div>
+            <div class="brazo-wrapper">
+                 <img src="https://png.pngtree.com/png-clipart/20241026/original/pngtree-humanoid-robot-arms-enhancing-human-robot-interaction-png-image_16510457.png
+         alt="Brazo robótico" 
+         style="width: 250px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); border-radius: 20px;">
+    <div class="hotspot" style="top: 30%; left: 60%;" data-component="spo2"></div>
+    <div class="hotspot" style="top: 55%; left: 35%;" data-component="temp"></div>
+    <div class="hotspot" style="top: 20%; left: 45%;" data-component="arduino"></div>
+    <div class="hotspot" style="top: 70%; left: 70%;" data-component="bt"></div>
+</div>
+        <div class="modal-info">
+            <h2 style="font-family: 'Montserrat'; color: var(--vital-aqua); margin-bottom: 8px;">Arquitectura del Hardware</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">Conoce los componentes integrados en el prototipo VitalEduino</p>
+            
+            <div id="componentDetail" class="component-card active-comp">
+                <i class="fas fa-hand-pointer" style="font-size: 2rem; color: var(--vital-aqua);"></i>
+                <h3 style="margin: 12px 0 8px;">Selecciona un componente</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem;">Haz clic en los puntos interactivos para conocer cada elemento del sistema</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL COMPARADOR DE RANGOS NORMALES -->
+<div id="rangosModal" class="rangos-modal">
+    <div class="rangos-container">
+        <h3><i class="fas fa-table-list"></i> Rangos normales de signos vitales</h3>
+        <table class="rangos-tabla">
+            <thead>
+                <tr>
+                    <th>Signo vital</th>
+                    <th>Rango normal</th>
+                    <th>Unidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><i class="fas fa-heartbeat" style="color: #FF6B6B;"></i> Frecuencia Cardíaca</td>
+                    <td>60 - 100</td>
+                    <td>BPM</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-thermometer-half" style="color: #FFB347;"></i> Temperatura</td>
+                    <td>36.1 - 37.2</td>
+                    <td>°C</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-lungs" style="color: #4CD6B3;"></i> Saturación O₂ (SpO₂)</td>
+                    <td>95 - 100</td>
+                    <td>%</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-brain"></i> Presión Arterial</td>
+                    <td>120/80</td>
+                    <td>mmHg</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-lungs"></i> Frecuencia Respiratoria</td>
+                    <td>12 - 20</td>
+                    <td>rpm</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 16px; text-align: center;">
+            <i class="fas fa-info-circle"></i> Valores de referencia para adultos sanos
+        </p>
+        <button class="rangos-cerrar" id="closeRangosBtn">Cerrar</button>
+    </div>
+</div>
+
+<!-- MODAL HISTORIAL -->
+<div id="historialModal" class="historial-modal">
+    <div class="historial-container">
+        <h3><i class="fas fa-history"></i> Historial de mediciones</h3>
+        <div id="listaHistorial" class="historial-lista">
+            <p style="text-align: center; color: var(--text-muted);">No hay mediciones aún</p>
+        </div>
+        <button class="historial-cerrar" id="closeHistorialBtn">Cerrar</button>
+    </div>
+</div>
+
+<!-- MODAL ESTADÍSTICAS -->
+<div id="estadisticasModal" class="estadisticas-modal">
+    <div class="estadisticas-container">
+        <h3><i class="fas fa-chart-simple"></i> Estadísticas</h3>
+        <div class="estadistica-card">
+            <div class="estadistica-titulo">❤️ Frecuencia Cardíaca</div>
+            <div class="estadistica-valor" id="estFCPromedio">--</div>
+            <div class="estadistica-unidad">BPM (promedio)</div>
+            <div class="estadistica-rango" id="estFCRango">Rango: --</div>
+        </div>
+        <div class="estadistica-card">
+            <div class="estadistica-titulo">🌡️ Temperatura</div>
+            <div class="estadistica-valor" id="estTempPromedio">--</div>
+            <div class="estadistica-unidad">°C (promedio)</div>
+            <div class="estadistica-rango" id="estTempRango">Rango: --</div>
+        </div>
+        <div class="estadistica-card">
+            <div class="estadistica-titulo">🫁 Saturación O₂</div>
+            <div class="estadistica-valor" id="estSpO2Promedio">--</div>
+            <div class="estadistica-unidad">% (promedio)</div>
+            <div class="estadistica-rango" id="estSpO2Rango">Rango: --</div>
+        </div>
+        <div class="estadistica-card">
+            <div class="estadistica-titulo">📊 Total de mediciones</div>
+            <div class="estadistica-valor" id="estTotalMediciones">0</div>
+        </div>
+        <button class="estadisticas-cerrar" id="closeEstadisticasBtn">Cerrar</button>
+    </div>
+</div>
+
+<script>  
+    // ============================================
+    // ELEMENTOS DOM
+    // ============================================
+    const heartRateSpan = document.getElementById('heartRateValue');
+    const tempSpan = document.getElementById('tempValue');
+    const spo2Span = document.getElementById('spo2Value');
+    const statusLed = document.getElementById('statusLed');
+    const statusText = document.getElementById('statusText');
+    const statusDetail = document.getElementById('statusDetail');
+    const connectBtn = document.getElementById('connectBtn');
+    const btnTomarFC = document.getElementById('btnTomarFC');
+    const btnTomarTemp = document.getElementById('btnTomarTemp');
+
+    // ============================================
+// COMPONENTES DEL HARDWARE (Mover al principio del script)
+// ============================================
+const components = {
+    spo2: {
+        name: "Sensor MAX30102",
+        description: "Sensor óptico de frecuencia cardíaca y oximetría. Utiliza LEDs rojo e infrarrojo para medir la absorción de luz en sangre periférica.",
+        specs: "Rango SpO₂: 0-100%, Precisión: ±2%",
+        icon: "fa-heartbeat"
+    },
+    temp: {
+        name: "Sensor DS18B20",
+        description: "Termómetro digital resistente al agua con interfaz OneWire. Alta precisión para temperatura corporal.",
+        specs: "Rango: -55°C a +125°C, Precisión: ±0.5°C",
+        icon: "fa-thermometer-half"
+    },
+    arduino: {
+        name: "Arduino Nano",
+        description: "Microcontrolador ATmega328P. Procesa señales de sensores y envía datos vía Bluetooth.",
+        specs: "Flash: 32KB, RAM: 2KB, 14 pines digitales",
+        icon: "fa-microchip"
+    },
+    bt: {
+        name: "Módulo HM-10",
+        description: "Módulo Bluetooth 4.0 BLE para transmisión inalámbrica de datos a interfaz web.",
+        specs: "Alcance: 10m, Consumo: 30mA",
+        icon: "fa-bluetooth-b"
+    }
+};
+    
+    // ============================================
+    // GRÁFICA
+    // ============================================
+    let heartHistory = [72, 74, 73, 75, 78, 76];
+    const ctx = document.getElementById('heartChart').getContext('2d');
+    const heartChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['-5s', '-4s', '-3s', '-2s', '-1s', 'Ahora'],
+            datasets: [{
+                label: 'Frecuencia Cardíaca (BPM)',
+                data: heartHistory,
+                borderColor: '#4CD6B3',
+                backgroundColor: 'rgba(76, 214, 179, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { min: 50, max: 120 } }
+        }
+    });
+    
+    function actualizarGrafica(nuevoFC) {
+        heartHistory.push(nuevoFC);
+        if (heartHistory.length > 6) heartHistory.shift();
+        heartChart.data.datasets[0].data = [...heartHistory];
+        heartChart.update('none');
+    }
+    
+    // ============================================
+    // BLUETOOTH
+    // ============================================
+    let bluetoothDevice = null;
+    let bluetoothCharacteristic = null;
+    let bluetoothConnected = false;
+    let bufferDatos = "";
+    let modoFCActivo = false;
+    let modoTempActivo = false;
+    
+    async function conectarBluetooth() {
+        try {
+            statusDetail.innerText = '🔍 Buscando dispositivo...';
+            bluetoothDevice = await navigator.bluetooth.requestDevice({
+                filters: [{ namePrefix: "HM" }, { namePrefix: "HC" }, { namePrefix: "BT" }],
+                optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+            });
+            statusDetail.innerText = '🔄 Conectando...';
+            const server = await bluetoothDevice.gatt.connect();
+            const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+            bluetoothCharacteristic = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+            await bluetoothCharacteristic.startNotifications();
+            bluetoothCharacteristic.addEventListener('characteristicvaluechanged', recibirDatos);
+            bluetoothConnected = true;
+            statusLed.classList.add('connected');
+            statusText.innerText = 'Conectado';
+            statusDetail.innerText = '✅ Bluetooth conectado.';
+            connectBtn.innerHTML = '<i class="fas fa-bluetooth"></i> Desconectar';
+            console.log('✅ Bluetooth conectado');
+        } catch (error) {
+            console.log('❌ Error:', error);
+            statusDetail.innerText = 'Error de conexión: ' + error.message;
+            bluetoothConnected = false;
+        }
+    }
+    
+    function desconectarBluetooth() {
+        if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+            bluetoothDevice.gatt.disconnect();
+        }
+        bluetoothConnected = false;
+        bluetoothCharacteristic = null;
+        statusLed.classList.remove('connected');
+        statusText.innerText = 'Desconectado';
+        statusDetail.innerText = 'Esperando conexión Bluetooth';
+        connectBtn.innerHTML = '<i class="fas fa-bluetooth-b"></i> Conectar dispositivo';
+        console.log('🔌 Desconectado');
+    }
+    
+    async function enviarComando(cmd) {
+        if (!bluetoothConnected || !bluetoothCharacteristic) {
+            statusDetail.innerText = '❌ Conecta el Bluetooth primero';
+            return;
+        }
+        try {
+            const encoder = new TextEncoder();
+            await bluetoothCharacteristic.writeValue(encoder.encode(cmd + "\n"));
+            console.log('✅ Comando enviado:', cmd);
+        } catch (error) {
+            console.log('❌ Error al enviar:', error);
+            statusDetail.innerText = 'Error al enviar comando';
+        }
+    }
+    
+    function actualizarEstiloBotones() {
+        if (btnTomarFC) {
+            if (modoFCActivo) {
+                btnTomarFC.style.background = "linear-gradient(135deg, #4CD6B3, #2E8B57)";
+                btnTomarFC.style.boxShadow = "0 0 10px #4CD6B3";
+                btnTomarFC.innerHTML = '<i class="fas fa-heartbeat"></i> 🔴 FC ACTIVADO';
+            } else {
+                btnTomarFC.style.background = "linear-gradient(135deg, #FF6B6B, #FF4757)";
+                btnTomarFC.style.boxShadow = "none";
+                btnTomarFC.innerHTML = '<i class="fas fa-heartbeat"></i> Tomar FC';
+            }
+        }
+        if (btnTomarTemp) {
+            if (modoTempActivo) {
+                btnTomarTemp.style.background = "linear-gradient(135deg, #4CD6B3, #2E8B57)";
+                btnTomarTemp.style.boxShadow = "0 0 10px #4CD6B3";
+                btnTomarTemp.innerHTML = '<i class="fas fa-thermometer-half"></i> 🌡️ TEMP ACTIVADO';
+            } else {
+                btnTomarTemp.style.background = "linear-gradient(135deg, #FFB347, #FF8C00)";
+                btnTomarTemp.style.boxShadow = "none";
+                btnTomarTemp.innerHTML = '<i class="fas fa-thermometer-half"></i> Tomar Temp';
+            }
+        }
+    }
+    
+    function recibirDatos(event) {
+        const valor = new TextDecoder().decode(event.target.value);
+        bufferDatos += valor;
+        let lineas = bufferDatos.split('\n');
+        bufferDatos = lineas.pop() || "";
+        
+        for (let linea of lineas) {
+            linea = linea.replace(/[^\x20-\x7E]/g, '');
+            console.log('📥:', linea);
+            
+            if (linea.startsWith("FC:")) {
+                const fcMatch = linea.match(/FC:(\d+)/);
+                const spo2Match = linea.match(/SPO2:(\d+)/);
+                if (fcMatch) {
+                    heartRateSpan.innerText = fcMatch[1];
+                    actualizarGrafica(parseInt(fcMatch[1]));
+                }
+                if (spo2Match) spo2Span.innerText = spo2Match[1];
+                statusDetail.innerText = '✅ FC: ' + fcMatch[1] + ' BPM | SpO2: ' + spo2Match[1] + '%';
+                // Guardar en historial
+                const tempActual = parseFloat(tempSpan.innerText);
+                guardarEnHistorial(parseInt(fcMatch[1]), tempActual, parseInt(spo2Match[1]));
+            }
+            else if (linea.startsWith("TEMP:")) {
+                const tempMatch = linea.match(/TEMP:(\d+\.?\d*)/);
+                if (tempMatch) {
+                    tempSpan.innerText = tempMatch[1];
+                    statusDetail.innerText = '✅ Temperatura: ' + tempMatch[1] + '°C';
+                    // Guardar en historial
+                    const fcActual = parseInt(heartRateSpan.innerText);
+                    const spo2Actual = parseInt(spo2Span.innerText);
+                    guardarEnHistorial(fcActual, parseFloat(tempMatch[1]), spo2Actual);
+                }
+            }
+            else if (linea === "FC_ON") {
+                modoFCActivo = true;
+                modoTempActivo = false;
+                actualizarEstiloBotones();
+                statusDetail.innerText = '📊 Modo FC ACTIVADO';
+            }
+            else if (linea === "FC_OFF") {
+                modoFCActivo = false;
+                actualizarEstiloBotones();
+                statusDetail.innerText = '⏹️ Modo FC DESACTIVADO';
+            }
+            else if (linea === "TEMP_ON") {
+                modoTempActivo = true;
+                modoFCActivo = false;
+                actualizarEstiloBotones();
+                statusDetail.innerText = '🌡️ Modo Temperatura ACTIVADO';
+            }
+            else if (linea === "TEMP_OFF") {
+                modoTempActivo = false;
+                actualizarEstiloBotones();
+                statusDetail.innerText = '⏹️ Modo Temperatura DESACTIVADO';
+            }
+            else if (linea.startsWith("ERROR:")) {
+                statusDetail.innerText = '⚠️ ' + linea;
+            }
+        }
+    }
+    
+    // ============================================
+    // HISTORIAL Y ESTADÍSTICAS
+    // ============================================
+    let historial = [];
+    
+    function guardarEnHistorial(fc, temp, spo2) {
+        const ahora = new Date();
+        const fecha = ahora.toLocaleDateString();
+        const hora = ahora.toLocaleTimeString();
+        
+        historial.unshift({
+            fecha: fecha,
+            hora: hora,
+            fc: fc,
+            temp: temp,
+            spo2: spo2
+        });
+        
+        if (historial.length > 20) historial.pop();
+        localStorage.setItem('vitaleduin-historial', JSON.stringify(historial));
+        
+        actualizarListaHistorial();
+        actualizarEstadisticas();
+    }
+    
+    function actualizarListaHistorial() {
+        const listaDiv = document.getElementById('listaHistorial');
+        if (!listaDiv) return;
+        
+        if (historial.length === 0) {
+            listaDiv.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No hay mediciones aún</p>';
+            return;
+        }
+        
+        let html = '';
+        for (let i = 0; i < Math.min(historial.length, 15); i++) {
+            const m = historial[i];
+            html += `
+                <div class="historial-item">
+                    <div class="historial-fecha">📅 ${m.fecha} - ${m.hora}</div>
+                    <div class="historial-valores">
+                        <span>❤️ ${m.fc} BPM</span>
+                        <span>🌡️ ${m.temp}°C</span>
+                        <span>🫁 ${m.spo2}%</span>
+                    </div>
+                </div>
+            `;
+        }
+        listaDiv.innerHTML = html;
+    }
+    
+    function actualizarEstadisticas() {
+        if (historial.length === 0) {
+            document.getElementById('estFCPromedio').innerText = '--';
+            document.getElementById('estTempPromedio').innerText = '--';
+            document.getElementById('estSpO2Promedio').innerText = '--';
+            document.getElementById('estFCRango').innerHTML = 'Rango: --';
+            document.getElementById('estTempRango').innerHTML = 'Rango: --';
+            document.getElementById('estSpO2Rango').innerHTML = 'Rango: --';
+            document.getElementById('estTotalMediciones').innerText = '0';
+            return;
+        }
+        
+        let sumaFC = 0, sumaTemp = 0, sumaSpO2 = 0;
+        let minFC = 999, maxFC = 0;
+        let minTemp = 999, maxTemp = 0;
+        let minSpO2 = 999, maxSpO2 = 0;
+        
+        for (let m of historial) {
+            sumaFC += m.fc;
+            sumaTemp += m.temp;
+            sumaSpO2 += m.spo2;
+            if (m.fc < minFC) minFC = m.fc;
+            if (m.fc > maxFC) maxFC = m.fc;
+            if (m.temp < minTemp) minTemp = m.temp;
+            if (m.temp > maxTemp) maxTemp = m.temp;
+            if (m.spo2 < minSpO2) minSpO2 = m.spo2;
+            if (m.spo2 > maxSpO2) maxSpO2 = m.spo2;
+        }
+        
+        document.getElementById('estFCPromedio').innerText = Math.round(sumaFC / historial.length);
+        document.getElementById('estTempPromedio').innerText = (sumaTemp / historial.length).toFixed(1);
+        document.getElementById('estSpO2Promedio').innerText = Math.round(sumaSpO2 / historial.length);
+        document.getElementById('estFCRango').innerHTML = `Rango: ${minFC} - ${maxFC} BPM`;
+        document.getElementById('estTempRango').innerHTML = `Rango: ${minTemp.toFixed(1)} - ${maxTemp.toFixed(1)} °C`;
+        document.getElementById('estSpO2Rango').innerHTML = `Rango: ${minSpO2} - ${maxSpO2} %`;
+        document.getElementById('estTotalMediciones').innerText = historial.length;
+    }
+    
+    function cargarHistorialGuardado() {
+        const guardado = localStorage.getItem('vitaleduin-historial');
+        if (guardado) {
+            historial = JSON.parse(guardado);
+            actualizarListaHistorial();
+            actualizarEstadisticas();
+        }
+    }
+    
+    // ============================================
+    // EVENTOS DE MODALES
+    // ============================================
+    const hardwareModal = document.getElementById('hardwareModal');
+    const rangosModal = document.getElementById('rangosModal');
+    const historialModal = document.getElementById('historialModal');
+    const estadisticasModal = document.getElementById('estadisticasModal');
+    
+    document.getElementById('openHardwareModal')?.addEventListener('click', () => {
+        if (hardwareModal) hardwareModal.style.display = 'flex';
+    });
+    document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+        if (hardwareModal) hardwareModal.style.display = 'none';
+    });
+    document.getElementById('openRangosModal')?.addEventListener('click', () => {
+        if (rangosModal) rangosModal.style.display = 'flex';
+    });
+    document.getElementById('closeRangosBtn')?.addEventListener('click', () => {
+        if (rangosModal) rangosModal.style.display = 'none';
+    });
+    document.getElementById('openHistorialModal')?.addEventListener('click', () => {
+        actualizarListaHistorial();
+        if (historialModal) historialModal.style.display = 'flex';
+    });
+    document.getElementById('closeHistorialBtn')?.addEventListener('click', () => {
+        if (historialModal) historialModal.style.display = 'none';
+    });
+    document.getElementById('openEstadisticasModal')?.addEventListener('click', () => {
+        actualizarEstadisticas();
+        if (estadisticasModal) estadisticasModal.style.display = 'flex';
+    });
+    document.getElementById('closeEstadisticasBtn')?.addEventListener('click', () => {
+        if (estadisticasModal) estadisticasModal.style.display = 'none';
+    });
+    
+    // Cerrar modales al hacer clic fuera
+    window.addEventListener('click', (e) => {
+        if (e.target === hardwareModal) hardwareModal.style.display = 'none';
+        if (e.target === rangosModal) rangosModal.style.display = 'none';
+        if (e.target === historialModal) historialModal.style.display = 'none';
+        if (e.target === estadisticasModal) estadisticasModal.style.display = 'none';
+    });
+    
+    // ============================================
+    // OTROS EVENTOS
+    // ============================================
+    document.getElementById('refreshChart')?.addEventListener('click', () => {
+        heartHistory = [72, 74, 73, 75, 78, 76];
+        heartChart.data.datasets[0].data = [...heartHistory];
+        heartChart.update();
+    });
+    document.getElementById('goDashboard')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    document.getElementById('dashboardBtn')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    
+    // Modo oscuro
+    document.getElementById('themeToggle')?.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+    });
+    
+    // Modo Examen
+    const btnExamen = document.getElementById('btnExamen');
+    const examenPanel = document.getElementById('examenPanel');
+    const respuestaInput = document.getElementById('respuestaExamen');
+    const btnVerificar = document.getElementById('btnVerificar');
+    const resultadoDiv = document.getElementById('resultadoExamen');
+    let modoExamenActivo = false;
+    
+    btnExamen?.addEventListener('click', () => {
+        modoExamenActivo = !modoExamenActivo;
+        document.body.classList.toggle('modo-examen', modoExamenActivo);
+        btnExamen.innerHTML = modoExamenActivo ? '<i class="fas fa-eye"></i> Desactivar Modo Examen' : '<i class="fas fa-graduation-cap"></i> Activar Modo Examen';
+        if (examenPanel) examenPanel.classList.toggle('visible', modoExamenActivo);
+    });
+    
+    btnVerificar?.addEventListener('click', () => {
+        if (!modoExamenActivo) return;
+        const fc = parseInt(heartRateSpan.innerText);
+        const temp = parseFloat(tempSpan.innerText);
+        const spo2 = parseInt(spo2Span.innerText);
+        const respuesta = respuestaInput.value.toLowerCase().trim();
+        
+        let correcto = false;
+        if (fc < 60 && respuesta.includes('bradicardia')) correcto = true;
+        else if (fc > 100 && respuesta.includes('taquicardia')) correcto = true;
+        else if (temp < 36 && respuesta.includes('hipotermia')) correcto = true;
+        else if (temp > 37.5 && respuesta.includes('fiebre')) correcto = true;
+        else if (spo2 < 94 && respuesta.includes('hipoxia')) correcto = true;
+        else if (fc >= 60 && fc <= 100 && temp >= 36 && temp <= 37.5 && spo2 >= 95 && respuesta.includes('normal')) correcto = true;
+        
+        resultadoDiv.innerHTML = correcto ?
+            `<div class="resultado-correcto">✅ Correcto!<br>FC:${fc} Temp:${temp} SpO2:${spo2}</div>` :
+            `<div class="resultado-incorrecto">❌ Incorrecto. Revisa los valores.</div>`;
+        if (correcto) respuestaInput.value = '';
+    });
+    
+    // Emergencia
+    let valoresNormales = { fc: 78, temp: 36.5, spo2: 97 };
+    document.getElementById('btnEmergencia')?.addEventListener('click', () => {
+        valoresNormales = { fc: parseInt(heartRateSpan.innerText), temp: parseFloat(tempSpan.innerText), spo2: parseInt(spo2Span.innerText) };
+        heartRateSpan.innerText = '145';
+        tempSpan.innerText = '39.5';
+        spo2Span.innerText = '82';
+        document.querySelector('.vital-card').style.background = 'linear-gradient(135deg, #FF3B3B, #CC0000)';
+        statusDetail.innerHTML = '🚨 EMERGENCIA ACTIVADA';
+    });
+    document.getElementById('btnReestablecer')?.addEventListener('click', () => {
+        heartRateSpan.innerText = valoresNormales.fc;
+        tempSpan.innerText = valoresNormales.temp;
+        spo2Span.innerText = valoresNormales.spo2;
+        document.querySelector('.vital-card').style.background = 'linear-gradient(135deg, var(--vital-blue), var(--vital-aqua))';
+        statusDetail.innerHTML = 'Valores reestablecidos';
+    });
+    
+    // Temas
+    function cambiarTema(tema) {
+        document.body.classList.remove('theme-night', 'theme-nature', 'theme-emergency');
+        if (tema === 'noche') document.body.classList.add('theme-night');
+        else if (tema === 'nature') document.body.classList.add('theme-nature');
+        else if (tema === 'emergency') document.body.classList.add('theme-emergency');
+        localStorage.setItem('vitaleduin-theme', tema);
+        document.querySelectorAll('.tema-btn').forEach(btn => {
+            btn.classList.remove('active-theme');
+            if (btn.dataset.tema === tema) btn.classList.add('active-theme');
+        });
+    }
+    document.querySelectorAll('.tema-btn').forEach(btn => {
+        btn.addEventListener('click', () => cambiarTema(btn.dataset.tema));
+    });
+    const temaGuardado = localStorage.getItem('vitaleduin-theme');
+    if (temaGuardado) cambiarTema(temaGuardado);
+    
+    // Juego Consultorio
+    const pacientesDB = [
+        { nombre: "Carlos", avatar: "👨", fc: 72, temp: 36.5, spo2: 98, diagnostico: "normal", descripcion: "Paciente sano" },
+        { nombre: "Ana", avatar: "👩", fc: 125, temp: 37.1, spo2: 96, diagnostico: "taquicardia", descripcion: "FC elevada" },
+        { nombre: "Jorge", avatar: "👨", fc: 52, temp: 36.3, spo2: 97, diagnostico: "bradicardia", descripcion: "FC baja" },
+        { nombre: "Elena", avatar: "👩", fc: 95, temp: 38.5, spo2: 97, diagnostico: "fiebre", descripcion: "Temperatura alta" },
+        { nombre: "Andrés", avatar: "👨", fc: 58, temp: 35.2, spo2: 95, diagnostico: "hipotermia", descripcion: "Temperatura baja" },
+        { nombre: "Fernando", avatar: "👨", fc: 92, temp: 37.0, spo2: 89, diagnostico: "hipoxia", descripcion: "Baja saturación" }
+    ];
+    
+    let pacientesDisponibles = [], pacienteActual = null, puntaje = 0, atendidos = 0, respuestaBloqueada = false;
+    
+    function iniciarJuego() {
+        pacientesDisponibles = [...pacientesDB].sort(() => Math.random() - 0.5);
+        puntaje = 0; atendidos = 0; respuestaBloqueada = false;
+        document.getElementById('puntaje').innerHTML = '0';
+        document.getElementById('progresoFill').style.width = '0%';
+        cargarPaciente();
+    }
+    
+    function cargarPaciente() {
+        if (atendidos >= pacientesDisponibles.length) {
+            document.getElementById('gameFeedback').innerHTML = `<div style="padding:10px;background:rgba(76,214,179,0.2);">🎮 Juego completado! Puntaje: ${puntaje}</div>`;
+            document.getElementById('gameFeedback').classList.add('visible');
+            return;
+        }
+        pacienteActual = pacientesDisponibles[atendidos];
+        document.getElementById('pacienteAvatar').innerHTML = pacienteActual.avatar;
+        document.getElementById('pacienteNombre').innerHTML = pacienteActual.nombre;
+        document.getElementById('pacienteEdad').innerHTML = Math.floor(Math.random() * 50 + 20) + ' años';
+        document.getElementById('gameFC').innerHTML = pacienteActual.fc;
+        document.getElementById('gameTemp').innerHTML = pacienteActual.temp.toFixed(1);
+        document.getElementById('gameSpO2').innerHTML = pacienteActual.spo2;
+        document.getElementById('gameFeedback').classList.remove('visible');
+        document.querySelectorAll('.opcion-btn').forEach(btn => {
+            btn.classList.remove('correcta', 'incorrecta');
+            btn.disabled = false;
+        });
+        respuestaBloqueada = false;
+    }
+    
+    function verificarDiagnostico(diagnostico) {
+        if (respuestaBloqueada) return;
+        respuestaBloqueada = true;
+        const esCorrecto = diagnostico === pacienteActual.diagnostico;
+        if (esCorrecto) puntaje += 10;
+        document.getElementById('puntaje').innerHTML = puntaje;
+        const feedback = document.getElementById('gameFeedback');
+        feedback.innerHTML = esCorrecto ?
+            `<div class="feedback-correcto">✅ Correcto! ${pacienteActual.descripcion}</div>` :
+            `<div class="feedback-incorrecto">❌ Incorrecto. Era ${pacienteActual.diagnostico}. ${pacienteActual.descripcion}</div>`;
+        feedback.classList.add('visible');
+        document.querySelectorAll('.opcion-btn').forEach(btn => btn.disabled = true);
+    }
+    
+    document.querySelectorAll('.opcion-btn').forEach(btn => {
+        btn.addEventListener('click', () => verificarDiagnostico(btn.dataset.diagnostico));
+    });
+    document.getElementById('btnSiguiente')?.addEventListener('click', () => {
+        if (!respuestaBloqueada) return;
+        atendidos++;
+        const progreso = (atendidos / pacientesDisponibles.length) * 100;
+        document.getElementById('progresoFill').style.width = progreso + '%';
+        cargarPaciente();
+    });
+    document.getElementById('btnReiniciarJuego')?.addEventListener('click', iniciarJuego);
+    
+    iniciarJuego();
+    
+    // Hotspots
+    document.querySelectorAll('.hotspot').forEach(hotspot => {
+        hotspot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const comp = components[hotspot.dataset.component];
+            if (comp) {
+                document.getElementById('componentDetail').innerHTML = `<i class="fas ${comp.icon}" style="font-size:2rem;color:var(--vital-aqua);"></i>
+                    <h3>${comp.name}</h3><p>${comp.description}</p>
+                    <div style="background:var(--bg-primary);padding:12px;border-radius:16px;">${comp.specs}</div>`;
+            }
+        });
+    });
+    
+    // Conexión Bluetooth
+    if (connectBtn) {
+        connectBtn.addEventListener('click', () => {
+            if (bluetoothConnected) desconectarBluetooth();
+            else conectarBluetooth();
+        });
+    }
+    
+    if (btnTomarFC) {
+        btnTomarFC.addEventListener('click', () => {
+            console.log('Botón FC presionado');
+            enviarComando("FC");
+        });
+    }
+    
+    if (btnTomarTemp) {
+        btnTomarTemp.addEventListener('click', () => {
+            console.log('Botón TEMP presionado');
+            enviarComando("TEMP");
+        });
+    }
+    
+    cargarHistorialGuardado();
+    console.log('✅ VitalEduino listo');
+</script>
+</body>
+</html>
