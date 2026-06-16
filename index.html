@@ -1325,6 +1325,195 @@
     font-weight: 600;
     cursor: pointer;
 }
+        /* ============================================
+   VERSIÓN MÓVIL - RESPONSIVE
+   ============================================ */
+
+/* Tablets (pantallas entre 768px y 1024px) */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .sidebar {
+        width: 70px;
+    }
+    
+    .main-content {
+        margin-left: 70px;
+        padding: 20px;
+    }
+    
+    .title-main {
+        font-size: 2rem;
+    }
+    
+    .vital-value {
+        font-size: 2.5rem;
+    }
+}
+
+/* Móviles (pantallas de hasta 768px) */
+@media (max-width: 768px) {
+    .app {
+        flex-direction: column;
+    }
+    
+    /* Sidebar horizontal en móvil */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 12px 0;
+        position: fixed;
+        bottom: 0;
+        top: auto;
+        left: 0;
+        right: 0;
+        background: var(--bg-secondary);
+        border-right: none;
+        border-top: 1px solid var(--border-light);
+        z-index: 1000;
+        gap: 0;
+    }
+    
+    .nav-item {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .nav-item .tooltip {
+        display: none;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 16px;
+        padding-bottom: 80px;
+    }
+    
+    .academic-header {
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+    }
+    
+    .title-main {
+        font-size: 1.5rem;
+    }
+    
+    .badge {
+        font-size: 0.6rem;
+        padding: 4px 10px;
+    }
+    
+    .subtitle {
+        font-size: 0.75rem;
+    }
+    
+    .vital-card {
+        padding: 16px;
+    }
+    
+    .vital-value {
+        font-size: 2rem;
+    }
+    
+    .sensors-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .card {
+        padding: 16px;
+    }
+    
+    .btn-primary {
+        padding: 12px;
+        font-size: 0.85rem;
+    }
+    
+    .btn-examen, .btn-emergencia, .btn-reestablecer {
+        padding: 10px;
+        font-size: 0.8rem;
+    }
+    
+    .temas-botones {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .game-valores {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .game-opciones {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-container {
+        flex-direction: column;
+        width: 95%;
+    }
+    
+    .modal-visual {
+        min-height: 300px;
+        padding: 20px;
+    }
+    
+    .modal-info {
+        padding: 20px;
+    }
+    
+    .rangos-container, .historial-container, .estadisticas-container {
+        width: 95%;
+        padding: 16px;
+    }
+    
+    .estadistica-card {
+        padding: 12px;
+    }
+    
+    .estadistica-valor {
+        font-size: 1.5rem;
+    }
+}
+
+/* Móviles pequeños (hasta 480px) */
+@media (max-width: 480px) {
+    .sidebar {
+        justify-content: space-around;
+    }
+    
+    .nav-item {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+    
+    .title-main {
+        font-size: 1.3rem;
+    }
+    
+    .vital-value {
+        font-size: 1.8rem;
+    }
+    
+    .card-title {
+        font-size: 0.9rem;
+    }
+    
+    .temas-botones {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .tema-btn {
+        padding: 8px 4px;
+        font-size: 0.6rem;
+    }
+}
     </style>
 </head>
 <body>
