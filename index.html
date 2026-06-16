@@ -216,6 +216,7 @@
             flex: 1;
             margin-left: 100px;
             padding: 32px 40px;
+            padding-bottom: 120px;
         }
 
         /* Header académico */
@@ -1325,7 +1326,7 @@
     font-weight: 600;
     cursor: pointer;
 }
-        /* ============================================
+/* ============================================
    VERSIÓN MÓVIL - RESPONSIVE
    ============================================ */
 
@@ -1391,7 +1392,7 @@
     .main-content {
         margin-left: 0;
         padding: 16px;
-        padding-bottom: 120px;
+        padding-bottom: 80px;
     }
     
     .academic-header {
@@ -1535,6 +1536,10 @@
         <i class="fas fa-table-list"></i>
         <span class="tooltip">Rangos normales</span>
     </div>
+    <div class="nav-item" id="openTemasBtn">
+    <i class="fas fa-palette"></i>
+    <span class="tooltip">Temas</span>
+</div>
     
     <!-- HISTORIAL -->
     <div class="nav-item" id="openHistorialModal">
@@ -1767,10 +1772,11 @@
         <div class="modal-visual">
             <div class="close-modal" id="closeModalBtn">&times;</div>
             <div class="brazo-wrapper">
-                 <img src="https://png.pngtree.com/png-clipart/20241026/original/pngtree-humanoid-robot-arms-enhancing-human-robot-interaction-png-image_16510457.png
-         alt="Brazo robótico" 
-         style="width: 250px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); border-radius: 20px;">
-    <div class="hotspot" style="top: 30%; left: 60%;" data-component="spo2"></div>
+                 <g-image_16510457 class="png"></g-image_16510457>
+<img src="https://png.pngtree.com/png-clipart/20241026/original/pngtree-humanoid-robot-arms-enhancing-human-robot-interaction-png-image_16510457.png" 
+     alt="Brazo robótico" 
+     style="width: 250px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); border-radius: 20px;">
+         <div class="hotspot" style="top: 30%; left: 60%;" data-component="spo2"></div>
     <div class="hotspot" style="top: 55%; left: 35%;" data-component="temp"></div>
     <div class="hotspot" style="top: 20%; left: 45%;" data-component="arduino"></div>
     <div class="hotspot" style="top: 70%; left: 70%;" data-component="bt"></div>
@@ -1872,6 +1878,27 @@
             <div class="estadistica-valor" id="estTotalMediciones">0</div>
         </div>
         <button class="estadisticas-cerrar" id="closeEstadisticasBtn">Cerrar</button>
+    </div>
+</div>
+<!-- MODAL TEMAS -->
+<div id="temasModal" class="rangos-modal">
+    <div class="rangos-container">
+        <h3><i class="fas fa-palette"></i> Elegir tema</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+            <button class="tema-btn tema-medico active-theme" data-tema="medico" style="padding: 15px; border-radius: 16px; border: none; cursor: pointer; font-weight: 600; color: white; background: linear-gradient(135deg, #64B6F7, #4CD6B3);">
+                🩺 Médico
+            </button>
+            <button class="tema-btn tema-noche" data-tema="noche" style="padding: 15px; border-radius: 16px; border: none; cursor: pointer; font-weight: 600; color: white; background: linear-gradient(135deg, #1E293B, #0F172A);">
+                🌙 Noche
+            </button>
+            <button class="tema-btn tema-nature" data-tema="nature" style="padding: 15px; border-radius: 16px; border: none; cursor: pointer; font-weight: 600; color: white; background: linear-gradient(135deg, #34D399, #064E3B);">
+                🌿 Naturaleza
+            </button>
+            <button class="tema-btn tema-emergencia" data-tema="emergency" style="padding: 15px; border-radius: 16px; border: none; cursor: pointer; font-weight: 600; color: white; background: linear-gradient(135deg, #EF4444, #7F1D1D);">
+                🚨 Emergencia
+            </button>
+        </div>
+        <button class="rangos-cerrar" id="closeTemasBtn">Cerrar</button>
     </div>
 </div>
 
@@ -2438,6 +2465,28 @@ const components = {
     
     cargarHistorialGuardado();
     console.log('✅ VitalEduino listo');
+    // ============================================
+// MODAL TEMAS
+// ============================================
+const temasModal = document.getElementById('temasModal');
+const openTemasBtn = document.getElementById('openTemasBtn');
+const closeTemasBtn = document.getElementById('closeTemasBtn');
+
+if (openTemasBtn) {
+    openTemasBtn.addEventListener('click', () => {
+        if (temasModal) temasModal.style.display = 'flex';
+    });
+}
+
+if (closeTemasBtn) {
+    closeTemasBtn.addEventListener('click', () => {
+        if (temasModal) temasModal.style.display = 'none';
+    });
+}
+
+window.addEventListener('click', (e) => {
+    if (e.target === temasModal) temasModal.style.display = 'none';
+});
 </script>
 </body>
 </html>
